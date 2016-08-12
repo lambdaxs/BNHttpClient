@@ -8,13 +8,35 @@
 
 #import "HttpClient.h"
 
+static NSString *DebugHost;
+static NSString *ServerHost;
+
+//请求类型
+typedef NS_ENUM(NSInteger, BNRequestType){
+    GET =       0 << 1,
+    POST =      1 << 2,
+    UPLOAD =    2 << 3
+};
+
+//请求解析类型
+typedef NS_ENUM(NSInteger, BNRequestSerializer){
+    requestHttp = 0 << 1,
+    requestJson = 1 << 2
+};
+
+//响应解析类型
+typedef NS_ENUM(NSInteger, BNResponseSerializer){
+    responseHttp = 0 << 1,
+    responseJson = 1 << 2
+};
+
 @interface HttpClient ()
 @property (nonatomic,copy)NSString *mUrl;
-@property (nonatomic,assign)RequestType mRequestType;
-@property (nonatomic,assign)RequestSerializer mRequestSerializer;
-@property (nonatomic,assign)ResponseSerializer mResponseSerializer;
+@property (nonatomic,assign)BNRequestType mRequestType;
+@property (nonatomic,assign)BNRequestSerializer mRequestSerializer;
+@property (nonatomic,assign)BNResponseSerializer mResponseSerializer;
 @property (nonatomic,copy)id mParameters;
-@property (nonatomic,copy) NSDictionary * mHeader;
+@property (nonatomic,strong) NSMutableDictionary *mHeader;
 @property (nonatomic,copy) NSDictionary * mFileDict;
 @property (nonatomic,copy) NSSet *acceptFormat;
 @property (nonatomic,assign)BOOL isDebug;
@@ -37,13 +59,6 @@
     return manager;
 }
 
-- (HttpClient *)make {
-    return self;
-}
-
-- (HttpClient *)and {
-    return self;
-}
 
 - (HttpClient *(^)(NSString *))url {
     return ^HttpClient *(NSString *url){
@@ -52,9 +67,79 @@
     };
 }
 
-- (HttpClient *(^)(RequestType))setRequestType {
-    return ^HttpClient *(RequestType type){
-        self.mRequestType = type;
+- (HttpClient *(^)(id))params{
+    return ^HttpClient *(id p){
+        self.mParameters = p;
+        return self;
+    };
+}
+
+- (HttpClient *(^)(NSString *key,id value))addHttpHeader {
+    return ^HttpClient *(NSString *key,id value){
+        if (!self.mHeader) {
+            self.mHeader = [NSMutableDictionary dictionary];
+        }
+        self.mHeader[key] = value;
+        return self;
+    };
+}
+
+- (HttpClient *(^)(NSString *))setRequestType {
+    return ^HttpClient *(NSString *type){
+        NSString *typeStr = [type uppercaseString];
+        BNRequestType requestType;
+        if ([typeStr isEqualToString:@"GET"]) {
+            requestType = GET;
+        }else if ([typeStr isEqualToString:@"POST"]){
+            requestType = POST;
+        }else if ([typeStr isEqualToString:@"UPLOAD"]){
+            requestType = UPLOAD;
+        }else {
+            requestType = GET;
+        }
+        self.mRequestType = requestType;
+        return self;
+    };
+}
+
+- (HttpClient *(^)(NSString *))setRequestSerializer{
+    return ^HttpClient *(NSString *type){
+        NSString *typeStr = [type uppercaseString];
+        BNRequestSerializer requestSer;
+        if ([typeStr isEqualToString:@"HTTP"]) {
+            requestSer = requestHttp;
+        }else if ([typeStr isEqualToString:@"JSON"]){
+            requestSer = requestJson;
+        }else {
+            requestSer = requestHttp;
+        }
+        self.mRequestSerializer = requestSer;
+        return self;
+    };
+}
+
+- (HttpClient *(^)(NSString *))setResponseSerializer{
+    return ^HttpClient *(NSString *type){
+        NSString *typeStr = [type uppercaseString];
+        BNResponseSerializer responseSer;
+        if ([typeStr isEqualToString:@"HTTP"]) {
+            responseSer = responseHttp;
+        }else if ([typeStr isEqualToString:@"JSON"]){
+            responseSer = responseJson;
+        }else {
+            responseSer = responseHttp;
+        }
+        self.mResponseSerializer = responseSer;
+        return self;
+    };
+}
+
+
+- (HttpClient *(^)(NSString *))addAcceptFormat {
+    return ^HttpClient *(NSString *format){
+        NSMutableSet *set = [NSMutableSet setWithSet:self.acceptFormat];
+        [set addObject:format];
+        self.acceptFormat = set;
         return self;
     };
 }
@@ -67,69 +152,6 @@
     };
 }
 
-//设置请求参数
-- (HttpClient *(^)(id))params{
-    return ^HttpClient *(id p){
-        self.mParameters = p;
-        return self;
-    };
-}
-
-//设置请求头
-- (HttpClient *(^)(NSDictionary *))setHttpHeader {
-    return ^HttpClient *(NSDictionary *dict){
-        self.mHeader = dict;
-        return self;
-    };
-}
-
-//设置请求解析方式
-- (HttpClient *(^)(RequestSerializer))setRequestSerializer{
-    return ^HttpClient *(RequestSerializer type){
-        self.mRequestSerializer = type;
-        return self;
-    };
-}
-
-//设置响应解析方式
-- (HttpClient *(^)(ResponseSerializer))setResponseSerializer{
-    return ^HttpClient *(ResponseSerializer type){
-        self.mResponseSerializer = type;
-        return self;
-    };
-}
-
-- (HttpClient *(^)(NSString *))appendAcceptFormat {
-//    [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript", @"text/html",@"text/plain",nil]
-    return ^HttpClient *(NSString *format){
-        NSMutableSet *set = [NSMutableSet setWithSet:self.acceptFormat];
-        [set addObject:format];
-        self.acceptFormat = set;
-        return self;
-    };
-}
-
-- (NSString *)filterUrl{
-    
-    if ([self.mUrl hasPrefix:@"http://"] || [self.mUrl hasPrefix:@"https://"]) {
-        return self.mUrl;
-    }
-    
-    if (!DebugHost || !ServerHost) {
-        NSLog(@"请设置主机地址");
-        return @"";
-    }
-    
-    NSString *host;
-    if (self.isDebug) {//开启测试服务器
-        host = DebugHost;
-    }else {
-        host = ServerHost;
-    }
-    
-    return [NSString stringWithFormat:@"%@/%@",host,self.mUrl];
-}
-
 - (HttpClient *(^)(BOOL))DeBug {
     return ^HttpClient *(BOOL isDebug){
         self.isDebug = isDebug;
@@ -138,7 +160,7 @@
 }
 
 - (void)jsonData:(void(^)(id))jsonData {
-    [self data:data failure:nil always:nil];
+    [self data:jsonData failure:nil always:nil];
 }
 
 - (void)data:(void (^)(id))data failure:(void (^)())failure {
@@ -163,11 +185,13 @@
     //调试信息回调
     __weak typeof(self) weakSelf = self;
     void(^debugCallback)(NSString *) = ^(NSString *requestTypeStr){
+#if DEBUG
         if (weakSelf.isDebug) {
             NSLog(@"#Warning#测试服务器:%@请求 URL:%@-参数:%@",requestTypeStr,weakSelf.mUrl,weakSelf.mParameters);
         }else {
             NSLog(@"%@请求 URL:%@-参数:%@",requestTypeStr,weakSelf.mUrl,weakSelf.mParameters);
         }
+#endif
     };
     
     //完成回调
@@ -225,9 +249,34 @@
     [self update];
 }
 
+//过滤url
+- (NSString *)filterUrl{
+    
+    //以http or https 开头的请求跳过过滤直接访问
+    if ([self.mUrl hasPrefix:@"http://"] || [self.mUrl hasPrefix:@"https://"]) {
+        return self.mUrl;
+    }
+    
+    if (!DebugHost || !ServerHost) {
+        NSLog(@"请设置主机地址");
+        return @"";
+    }
+    
+    NSString *host;
+    if (self.isDebug) {//开启测试服务器
+        host = DebugHost;
+    }else {
+        host = ServerHost;
+    }
+    
+    //host结尾带"/"去掉尾巴   mUrl开头带"/"去掉头
+    NSString *filterHostStr = [host hasSuffix:@"/"]?[host substringToIndex:host.length - 1]:host;
+    NSString *filterUrlStr = [self.mUrl hasPrefix:@"/"]?[self.mUrl substringFromIndex:1]:self.mUrl;
+    return [NSString stringWithFormat:@"%@/%@",filterHostStr,filterUrlStr];
+}
+
 //请求设置
 - (void)setRequest:(HttpClient *)client {
-    
     switch (client.mRequestSerializer) {
         case requestHttp:
             client.requestSerializer = [AFHTTPRequestSerializer serializer];
@@ -240,6 +289,7 @@
     }
 }
 
+//设置请求头信息
 - (void)setHeader:(HttpClient *)client{
     if (!self.mHeader) return;
     [self.mHeader enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
@@ -261,8 +311,6 @@
     }
 }
 
-
-
 //初始化默认参数
 - (void)update {
     self.mUrl = nil;
@@ -276,10 +324,18 @@
 
 @end
 
-HttpClient *XSHttp(RequestType type){
-    return XSHttpClient.setRequestType(type);
+HttpClient * BNHttp(NSString *type){
+    return [HttpClient manager].setRequestType(type);
 }
 
+void BNGetJsonData(NSString *url,id param,void(^callBack)(id jsonData)) {
+    [BNHttp(@"GET")
+     .url(url)
+     .params(param)
+     jsonData:^(id data) {
+         callBack(data);
+     }];
+}
 
 @interface BNHttpTarget : NSObject
 

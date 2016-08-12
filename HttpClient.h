@@ -9,81 +9,50 @@
 #import <Foundation/Foundation.h>
 #import "AFHTTPSessionManager.h"
 
-
-#define XSHttpClient [HttpClient manager]
-
-static NSString *DebugHost;
-static NSString *ServerHost;
-
 @interface HttpClient : AFHTTPSessionManager
 
 //设置正式服务器地址 和 测试服务器地址 建议在appDelegate中设置
 + (void)setServerHost:(NSString *)serverHost debugHost:(NSString *)debugHost;
 
-//请求类型
-typedef NS_ENUM(NSInteger, RequestType){
-    GET,
-    POST,
-    UPLOAD
-};
-
-//请求解析类型
-typedef NS_ENUM(NSInteger, RequestSerializer){
-    requestHttp,
-    requestJson
-};
-
-//响应解析类型
-typedef NS_ENUM(NSInteger, ResponseSerializer){
-    responseHttp,
-    responseJson
-};
-
-
-+ (HttpClient *)manager;
-
-- (HttpClient *)make;
-
-- (HttpClient *)and;
-
-//设置请求方式 GET POST UPLOAD...
-//- (HttpClient *(^)(RequestType type))setRequestType;
-
 //设置请求url
-- (HttpClient *(^)(NSString *url))url;
+- (HttpClient *(^)(NSString *))url;
 
 //设置请求参数
-- (HttpClient *(^)(id params))params;
-
-//模拟form上传时设置上传数据 传入的字典中有三个键data name fileName fileType
-- (HttpClient *(^)(NSDictionary *))setFile;
+- (HttpClient *(^)(id))params;
 
 //设置请求头
-- (HttpClient *(^)(NSDictionary *headerDict))setHttpHeader;
+- (HttpClient *(^)(NSString *key,id value))addHttpHeader;
 
 //设置请求解析方式
-- (HttpClient *(^)(RequestSerializer type))setRequestSerializer;
+- (HttpClient *(^)(NSString *))setRequestSerializer;
 
 //设置响应解析方式
-- (HttpClient *(^)(ResponseSerializer type))setResponseSerializer;
+- (HttpClient *(^)(NSString *))setResponseSerializer;
 
 //设置响应接收格式
-- (HttpClient *(^)(NSString *format))appendAcceptFormat;
+- (HttpClient *(^)(NSString *))addAcceptFormat;
 
 //设置是否用测试服务器
 - (HttpClient *(^)(BOOL isDebug))DeBug;
 
-//开始请求
-- (void)jsonData:(void(^)(id))jsonData;
+//模拟form上传时设置上传数据 传入的字典中有四个键值对
+//文件二进制数据：data 参数名称：name 文件名称：fileName 文件类型：fileType
+- (HttpClient *(^)(NSDictionary *))setFile;
 
-- (void)data:(void (^)(id))data
+//开始请求
+- (void)jsonData:(void(^)(id data))jsonData;
+
+- (void)data:(void (^)(id data))data
      failure:(void (^)())failure;
 
-- (void)data:(void (^)(id))data
+- (void)data:(void (^)(id data))data
      failure:(void (^)())failure
       always:(void(^)())always;
 
 @end
 
-HttpClient * XSHttp(RequestType type);
+HttpClient * BNHttp(NSString *type);
+
+//快捷请求json数据
+void BNGetJsonData(NSString *url,id param,void(^callBack)(id jsonData));
 
