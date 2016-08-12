@@ -74,6 +74,8 @@ typedef NS_ENUM(NSInteger, ResponseSerializer){
 - (HttpClient *(^)(BOOL isDebug))DeBug;
 
 //开始请求
+- (void)jsonData:(void(^)(id))jsonData;
+
 - (void)data:(void (^)(id))data
      failure:(void (^)())failure;
 

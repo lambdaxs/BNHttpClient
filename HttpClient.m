@@ -137,6 +137,9 @@
     };
 }
 
+- (void)jsonData:(void(^)(id))jsonData {
+    [self data:data failure:nil always:nil];
+}
 
 - (void)data:(void (^)(id))data failure:(void (^)())failure {
     [self data:data failure:failure always:nil];
