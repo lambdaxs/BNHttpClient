@@ -52,10 +52,43 @@ data:^(id data) {
    NSLog(@"always");
 }];
 ```
-AFN这种原生的调用暴露了太多语法细节，例如要设置一些参数得知道一些具体的类，修改这些类的属性或者方法来达到目的。
+* AFN这种原生的调用暴露了太多语法细节，例如要设置一些参数得知道一些具体的类，修改这些类的属性或者方法来达到目的。
 而链式调用的核心就将这些语法细节封装起来，不用知道底层到底是哪些类，只要知道一些通用的协议和规范就可以完成自己的目的。
-简言而之，BNHttp有两大作用：
+* 简言而之，BNHttp有两大作用：
 一是将离散的操作聚合起来，这样编程思路更加连贯，业务组织也更加灵活。
 二是将语法细节封装起来，使用者更多的是考虑业务细节，而不是底层的代码组织。
+
+##新增BNHttpTarget类，用于发送多个异步并发请求后，统一得到所有请求完成后的回调
+ 
+ ```objc
+ //生成一个队列对象
+ BNHttpQueue *queue = [[BNHttpQueue alloc]
+ initWithRequestType:@"GET"
+ url:@"https://www.xsdota.com/json1.json"
+ param:nil
+ resultId:@"id1"];
+ 
+ BNHttpQueue *queue1 = [[BNHttpQueue alloc]
+ initWithRequestType:@"GET"
+ url:@"https://www.xsdota.com/json2.json"
+ param:nil
+ resultId:@"id2"];
+ 
+ BNHttpQueue *queue2 = [[BNHttpQueue alloc]
+ initWithRequestType:@"GET"
+ url:@"https://www.xsdota.com/json3.json"
+ param:nil
+ resultId:@"id3"];
+ 
+// BNHttpTarget对象用到了KVO需要将该对象声明为strong属性 保持其强引用 避免被提前释放
+ //所有请求都完成 则回调success 部分请求完成回调some
+ self.target = [[BNHttpTarget alloc]
+ initWithQueue:@[queue,queue1,queue2]
+ success:^(NSDictionary *all) {
+ NSLog(@"all %@",all);// {"id1":...,"id2":...,"id3":...}
+ } some:^(NSDictionary *some) {
+ NSLog(@"all %@",some);
+ }];
+```
 
 

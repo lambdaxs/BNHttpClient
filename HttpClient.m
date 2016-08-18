@@ -196,19 +196,15 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     
     //完成回调
     void (^completeOperate)(id  _Nonnull responseObject) = ^(id  _Nonnull responseObject){
-        if (data) {
-            data(responseObject);
-            if(always) always();
-        }
+        if (data)data(responseObject);
+        if(always) always();        
     };
     
     //失败回调
     void (^errorOperate)(NSError * _Nonnull error) = ^(NSError * _Nonnull error){
         NSLog(@"%@",error);
-        if (failure) {
-            failure();
-            if(always) always();
-        }
+        if (failure)failure();
+        if(always) always();
     };
     
     switch (self.mRequestType) {
@@ -324,6 +320,9 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 
 @end
 
+
+
+
 HttpClient * BNHttp(NSString *type){
     return [HttpClient manager].setRequestType(type);
 }
@@ -337,11 +336,3 @@ void BNGetJsonData(NSString *url,id param,void(^callBack)(id jsonData)) {
      }];
 }
 
-@interface BNHttpTarget : NSObject
-
-@end
-
-@implementation BNHttpTarget
-
-
-@end
