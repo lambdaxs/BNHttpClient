@@ -1,5 +1,5 @@
 //
-//  HttpClient.h
+//  BNHttpClient.h
 //  NetworkManager
 //
 //  Created by xiaos on 16/4/26.
@@ -9,35 +9,35 @@
 #import <Foundation/Foundation.h>
 #import "AFHTTPSessionManager.h"
 
-@interface HttpClient : AFHTTPSessionManager
+@interface BNHttpClient : AFHTTPSessionManager
 
 //设置正式服务器地址 和 测试服务器地址 建议在appDelegate中设置
 + (void)setServerHost:(NSString *)serverHost debugHost:(NSString *)debugHost;
 
 //设置请求url
-- (HttpClient *(^)(NSString *))url;
+- (BNHttpClient *(^)(NSString *))url;
 
 //设置请求参数
-- (HttpClient *(^)(id))params;
+- (BNHttpClient *(^)(id))params;
 
 //设置请求头
-- (HttpClient *(^)(NSString *key,id value))addHttpHeader;
+- (BNHttpClient *(^)(NSString *key,id value))addHttpHeader;
 
 //设置请求解析方式
-- (HttpClient *(^)(NSString *))setRequestSerializer;
+- (BNHttpClient *(^)(NSString *))setRequestSerializer;
 
 //设置响应解析方式
-- (HttpClient *(^)(NSString *))setResponseSerializer;
+- (BNHttpClient *(^)(NSString *))setResponseSerializer;
 
 //设置响应接收格式
-- (HttpClient *(^)(NSString *))addAcceptFormat;
+- (BNHttpClient *(^)(NSString *))addAcceptFormat;
 
 //设置是否用测试服务器
-- (HttpClient *(^)(BOOL isDebug))DeBug;
+- (BNHttpClient *(^)(BOOL isDebug))DeBug;
 
 //模拟form上传时设置上传数据 传入的字典中有四个键值对
 //文件二进制数据：data 参数名称：name 文件名称：fileName 文件类型：fileType
-- (HttpClient *(^)(NSDictionary *))setFile;
+- (BNHttpClient *(^)(NSDictionary *))setFile;
 
 //开始请求
 - (void)jsonData:(void(^)(id data))jsonData;
@@ -51,7 +51,7 @@
 
 @end
 
-HttpClient * BNHttp(NSString *type);
+BNHttpClient * BNHttp(NSString *type);
 
 //快捷请求json数据
 void BNGetJsonData(NSString *url,id param,void(^callBack)(id jsonData));

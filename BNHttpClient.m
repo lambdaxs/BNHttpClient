@@ -1,12 +1,12 @@
 //
-//  HttpClient.m
+//  BNHttpClient.m
 //  NetworkManager
 //
 //  Created by xiaos on 16/4/26.
 //  Copyright © 2016年 wzx. All rights reserved.
 //
 
-#import "HttpClient.h"
+#import "BNHttpClient.h"
 
 static NSString *DebugHost;
 static NSString *ServerHost;
@@ -30,7 +30,7 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     responseJson = 1 << 2
 };
 
-@interface HttpClient ()
+@interface BNHttpClient ()
 @property (nonatomic,copy)NSString *mUrl;
 @property (nonatomic,assign)BNRequestType mRequestType;
 @property (nonatomic,assign)BNRequestSerializer mRequestSerializer;
@@ -42,40 +42,40 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 @property (nonatomic,assign)BOOL isDebug;
 @end
 
-@implementation HttpClient
+@implementation BNHttpClient
 
 + (void)setServerHost:(NSString *)serverHost debugHost:(NSString *)debugHost{
     ServerHost = serverHost;
     DebugHost = debugHost;
 }
 
-+ (HttpClient *)manager {
-    static HttpClient *manager = nil;
++ (BNHttpClient *)manager {
+    static BNHttpClient *manager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        manager = [[HttpClient alloc] init];
+        manager = [[BNHttpClient alloc] init];
         [manager update];
     });
     return manager;
 }
 
 
-- (HttpClient *(^)(NSString *))url {
-    return ^HttpClient *(NSString *url){
+- (BNHttpClient *(^)(NSString *))url {
+    return ^BNHttpClient *(NSString *url){
         self.mUrl = url;
         return self;
     };
 }
 
-- (HttpClient *(^)(id))params{
-    return ^HttpClient *(id p){
+- (BNHttpClient *(^)(id))params{
+    return ^BNHttpClient *(id p){
         self.mParameters = p;
         return self;
     };
 }
 
-- (HttpClient *(^)(NSString *key,id value))addHttpHeader {
-    return ^HttpClient *(NSString *key,id value){
+- (BNHttpClient *(^)(NSString *key,id value))addHttpHeader {
+    return ^BNHttpClient *(NSString *key,id value){
         if (!self.mHeader) {
             self.mHeader = [NSMutableDictionary dictionary];
         }
@@ -84,8 +84,8 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     };
 }
 
-- (HttpClient *(^)(NSString *))setRequestType {
-    return ^HttpClient *(NSString *type){
+- (BNHttpClient *(^)(NSString *))setRequestType {
+    return ^BNHttpClient *(NSString *type){
         NSString *typeStr = [type uppercaseString];
         BNRequestType requestType;
         if ([typeStr isEqualToString:@"GET"]) {
@@ -102,8 +102,8 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     };
 }
 
-- (HttpClient *(^)(NSString *))setRequestSerializer{
-    return ^HttpClient *(NSString *type){
+- (BNHttpClient *(^)(NSString *))setRequestSerializer{
+    return ^BNHttpClient *(NSString *type){
         NSString *typeStr = [type uppercaseString];
         BNRequestSerializer requestSer;
         if ([typeStr isEqualToString:@"HTTP"]) {
@@ -118,8 +118,8 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     };
 }
 
-- (HttpClient *(^)(NSString *))setResponseSerializer{
-    return ^HttpClient *(NSString *type){
+- (BNHttpClient *(^)(NSString *))setResponseSerializer{
+    return ^BNHttpClient *(NSString *type){
         NSString *typeStr = [type uppercaseString];
         BNResponseSerializer responseSer;
         if ([typeStr isEqualToString:@"HTTP"]) {
@@ -135,8 +135,8 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 }
 
 
-- (HttpClient *(^)(NSString *))addAcceptFormat {
-    return ^HttpClient *(NSString *format){
+- (BNHttpClient *(^)(NSString *))addAcceptFormat {
+    return ^BNHttpClient *(NSString *format){
         NSMutableSet *set = [NSMutableSet setWithSet:self.acceptFormat];
         [set addObject:format];
         self.acceptFormat = set;
@@ -144,16 +144,16 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     };
 }
 
-- (HttpClient *(^)(NSDictionary *))setFile {
+- (BNHttpClient *(^)(NSDictionary *))setFile {
     NSAssert(self.mRequestType == UPLOAD, @"GET POST 请求不支持上传文件,请使用UPLOAD");
-    return ^HttpClient *(NSDictionary *fileDict){
+    return ^BNHttpClient *(NSDictionary *fileDict){
         self.mFileDict = fileDict;
         return self;
     };
 }
 
-- (HttpClient *(^)(BOOL))DeBug {
-    return ^HttpClient *(BOOL isDebug){
+- (BNHttpClient *(^)(BOOL))DeBug {
+    return ^BNHttpClient *(BOOL isDebug){
         self.isDebug = isDebug;
         return self;
     };
@@ -172,7 +172,7 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
     NSAssert(self.mUrl, @"未设置请求URL");
     
     //初始化请求客户端
-    HttpClient *client = [[self class] manager];
+    BNHttpClient *client = [[self class] manager];
     //设置请求
     [self setRequest:client];
     [self setHeader:client];
@@ -272,7 +272,7 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 }
 
 //请求设置
-- (void)setRequest:(HttpClient *)client {
+- (void)setRequest:(BNHttpClient *)client {
     switch (client.mRequestSerializer) {
         case requestHttp:
             client.requestSerializer = [AFHTTPRequestSerializer serializer];
@@ -286,7 +286,7 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 }
 
 //设置请求头信息
-- (void)setHeader:(HttpClient *)client{
+- (void)setHeader:(BNHttpClient *)client{
     if (!self.mHeader) return;
     [self.mHeader enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         [client.requestSerializer setValue:obj forHTTPHeaderField:key];
@@ -294,7 +294,7 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 }
 
 //响应设置
-- (void)setResopnse:(HttpClient *)client {
+- (void)setResopnse:(BNHttpClient *)client {
     
     switch (client.mResponseSerializer) {
         case responseHttp:
@@ -323,8 +323,8 @@ typedef NS_ENUM(NSInteger, BNResponseSerializer){
 
 
 
-HttpClient * BNHttp(NSString *type){
-    return [HttpClient manager].setRequestType(type);
+BNHttpClient * BNHttp(NSString *type){
+    return [BNHttpClient manager].setRequestType(type);
 }
 
 void BNGetJsonData(NSString *url,id param,void(^callBack)(id jsonData)) {

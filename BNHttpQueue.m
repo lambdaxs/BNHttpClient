@@ -7,7 +7,7 @@
 //
 
 #import "BNHttpQueue.h"
-#import "HttpClient.h"
+#import "BNHttpClient.h"
 
 @implementation BNHttpQueue
 - (instancetype)initWithRequestType:(NSString *)type
