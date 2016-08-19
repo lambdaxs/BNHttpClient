@@ -24,7 +24,7 @@
 @interface BNHttpTarget : NSObject
 - (instancetype)initWithQueue:(NSArray<BNHttpQueue *> *)qs
                       success:(void(^)(NSDictionary *all))success
-                         some:(void(^)(NSDictionary *some))some;
+                         some:(void(^)(NSDictionary *some,NSArray<NSString *> *failureKeys))some;
 
 - (BOOL)isAllSuccess;
 @end

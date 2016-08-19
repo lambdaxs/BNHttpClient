@@ -28,7 +28,7 @@
 @property (nonatomic,strong) NSMutableDictionary *result;      ///< 最终结果
 @property (nonatomic,assign) NSUInteger completeCount;         ///< 已完成请求计数
 @property (nonatomic,assign) void(^successBlock)(NSDictionary *results); ///< 全部请求成功
-@property (nonatomic,assign) void(^someBlock)(NSDictionary *someResults);    ///< 部分请求成功
+@property (nonatomic,assign) void(^someBlock)(NSDictionary *someResults,NSArray<NSString *> *failureKeys);    ///< 部分请求成功
 @end
 
 @implementation BNHttpTarget
@@ -39,7 +39,7 @@
 
 - (instancetype)initWithQueue:(NSArray<BNHttpQueue *> *)qs
                       success:(void(^)(NSDictionary *))success
-                               some:(void(^)(NSDictionary *))some{
+                               some:(void(^)(NSDictionary *,NSArray<NSString *> *))some{
     if (self = [super init]) {
         self.completeCount = 0;
         self.queues = qs;
@@ -87,7 +87,13 @@
                 }
             }else {
                 if (self.someBlock) {
-                    self.someBlock([self.result copy]);
+                    NSMutableArray *failureKeys = [NSMutableArray array];
+                    [self.queues enumerateObjectsUsingBlock:^(BNHttpQueue * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                        if (!self.result[obj.resultId]) {
+                            [failureKeys addObject:obj.resultId];
+                        }
+                    }];
+                    self.someBlock([self.result copy],[failureKeys copy]);
                 }                
             }
         }
